@@ -1,0 +1,52 @@
+// video_id(primary key): Unique identifier of each video.
+// video_desc: Contains the description of each video.
+// video_title: Contains the title of each video.
+// video_duration: Contains the total video duration of the video.
+// video_release: Store the release date of the video.
+// video_genre: Store the genre of the video
+
+
+
+
+// for updating 
+// PUT http://localhost:8011/api/modification/videos
+// {
+//     "videoId":1,
+//     "adminId": 1, 
+//    "title": "update  Video Title",
+//    "description": "update  the a sample video description.",
+//    "duration": 120, 
+//    "releaseDate": "2024-07-18T00:00:00.000Z",
+//    "genre": "update",
+//    "link": "https://www.example.com/video.mp4"
+//    }
+ 
+
+// http://localhost:8011/api/modification/videos
+// Delete 
+// {
+//     "videoId":3
+//   }
+
+
+// http://localhost:8011/api/videos
+//  POst 
+// {
+//     "adminId": 1, 
+//     "title": "Sample Video Title",
+//     "description": "This is a sample video description.",
+//     "duration": 120, 
+//     "releaseDate": "2024-07-18T00:00:00.000Z",
+//     "genre": "Comedy",
+//     "link": "https://www.example.com/video.mp4"
+//   }
+
+
+
+// http://localhost:8011/api/videos
+
+// Get
+
+
+  
+  

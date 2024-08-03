@@ -1,0 +1,7 @@
+version: 2
+authtoken: 2jWb0rmP7B3kTAxRaEyHlqFfEcY_6eprmWSG8jYujp2aULavy
+tunnels:
+  my_tunnel_name:
+    proto: http
+    addr: 3000
+

@@ -1,0 +1,149 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserTeleGram {
+  id                  Int           @id @default(autoincrement())
+  firstName           String        @db.VarChar(64)
+  lastName            String?       @db.VarChar(64)
+  telegramId          String        @unique @db.VarChar(32)
+  telegramUsername    String?       @db.VarChar(64)
+  profilePicture      String?       @db.VarChar(128)
+  phoneNumber         String?       @db.VarChar(32)
+  authDate            String?        @db.VarChar(16)
+  languageCode        String?       @db.VarChar(16) // Optional field for user language preference
+  isBot               Boolean       @default(false) // Optional field to identify if the user is a bot
+  status              String?       @db.VarChar(16) // Optional field for user status
+  lastLogin           DateTime?     // Optional field to track the last login time
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  added               DateTime      @default(now())
+  allCoins            AllCoins?
+  invitationsSent     Invitation[]  @relation("InvitedBy")
+  invitationsReceived Invitation[]  @relation("InvitedUser")
+  acceptedInvitations Invitation[]  @relation("AcceptedBy")
+  eventsAttending     Event[]       @relation("Attendees")
+  tasksAssigned       Task[]        @relation("AssignedUsers")
+  wallet              Wallet[]
+  transactions        Transaction[] @relation("OwningUser")
+  fromTransactions    Transaction[] @relation("FromUser")
+  toTransactions      Transaction[] @relation("ToUser")
+}
+
+
+model AllCoins {
+  id      Int           @id @default(autoincrement())
+  userId  Int           @unique
+  balance Float         @default(0)
+  user    UserTeleGram? @relation(fields: [userId], references: [id])
+}
+
+model Event {
+  id        Int            @id @default(autoincrement())
+  name      String
+  date      DateTime
+  attendees UserTeleGram[] @relation("Attendees")
+  tasks     Task[]         @relation("EventTasks")
+}
+
+model Task {
+  id          Int            @id @default(autoincrement())
+  name        String
+  description String?
+  event       Event          @relation("EventTasks", fields: [eventId], references: [id])
+  eventId     Int
+  assignedTo  UserTeleGram[] @relation("AssignedUsers")
+}
+
+model Invitation {
+  id            Int           @id @default(autoincrement())
+  invitedById   Int
+  invitedUserId Int? // Nullable to allow invitations to non-registered users
+  acceptedById  Int? // Nullable to track which user accepted the invitation
+  code          String        @unique // Unique code for the invitation
+  createdAt     DateTime      @default(now())
+  expiresAt     DateTime?     @default(dbgenerated("NOW() + INTERVAL '1 DAY'")) // Automatically set to one day from creation
+  invitedBy     UserTeleGram  @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedUser   UserTeleGram? @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  acceptedBy    UserTeleGram? @relation("AcceptedBy", fields: [acceptedById], references: [id])
+
+  @@unique([code, acceptedById]) // Ensure that each invitation code can only be accepted once
+  @@index([invitedById])
+  @@index([code])
+  @@index([expiresAt])
+}
+
+model Wallet {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @unique
+  walletId     Int           @unique
+  balance      Int           @default(0)
+  user         UserTeleGram  @relation(fields: [userId], references: [id])
+  transactions Transaction[] @relation("WalletTransactions")
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  fromUserId      Int?
+  toUserId        Int?
+  amount          Int
+  transactionType String   @default("transfer")
+  createdAt       DateTime @default(now())
+
+  user     UserTeleGram? @relation(fields: [userId], references: [id], name: "OwningUser")
+  fromUser UserTeleGram? @relation(fields: [fromUserId], references: [id], name: "FromUser")
+  toUser   UserTeleGram? @relation(fields: [toUserId], references: [id], name: "ToUser")
+  wallet   Wallet?       @relation(fields: [walletId], references: [id], name: "WalletTransactions")
+  walletId Int
+}
+
+model Admin {
+  id         Int      @id @default(autoincrement())
+  removed    Boolean  @default(false)
+  enabled    Boolean  @default(true)
+  email      String   @unique
+  password   String
+  name       String
+  surname    String
+  photo      String?
+  createdAt  DateTime @default(now())
+  isLoggedIn Boolean?
+  posts      Post[]
+}
+
+model Post {
+  id        Int       @id @default(autoincrement()) // Unique identifier for each post
+  createdAt DateTime  @default(now()) // Timestamp for when the post was created
+  updatedAt DateTime  @updatedAt // Timestamp for when the post was last updated
+  published Boolean   @default(false) // Publication status of the post
+  author    Admin     @relation(fields: [authorId], references: [id]) // Relation to the User model
+  authorId  Int // Foreign key for the author
+  youtube   Streaming @relation(fields: [youId], references: [id]) // Relation to the Streaming model
+  youId     Int // Foreign key for the streaming video
+}
+
+model Streaming {
+  id            Int      @id @default(autoincrement()) // Unique identifier of each video
+  title         String // Contains the title of each video
+  description   String   @db.Text // Contains the description of each video
+  duration      Int // Contains the total video duration of the video
+  releaseDate   DateTime @default(now()) // Store the release date of the video
+  genre         String // Store the genre of the video
+  link          String
+  youtubevideos Post[]
+  added         DateTime @default(now())
+  updated       DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
